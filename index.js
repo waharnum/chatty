@@ -15,6 +15,16 @@ fluid.defaults("sjrk.chatty.chatroomTracker", {
   }
 });
 
+fluid.defaults("sjrk.chatty.translator", {
+  gradeNames: "fluid.component",
+  invokers: {
+    translate: {
+      funcName: "sjrk.chatty.translateMessage",
+      args: ["{arguments}.0", "{arguments}.1", "{arguments}.2"]
+    }
+  }
+});
+
 fluid.defaults("sjrk.chatty", {
     gradeNames: "fluid.component",
     components: {
@@ -22,9 +32,6 @@ fluid.defaults("sjrk.chatty", {
             type: "kettle.server",
             options: {
                 gradeNames: ["kettle.server.ws"],
-                wsServerOptions: {
-                  "clientTracking": true
-                },
                 port: 8081,
                 components: {
                     app: {
@@ -42,15 +49,7 @@ fluid.defaults("sjrk.chatty", {
                         type: "sjrk.chatty.chatroomTracker"
                     },
                     translator: {
-                        type: "fluid.component",
-                        options: {
-                          invokers: {
-                            translate: {
-                              funcName: "sjrk.chatty.translateMessage",
-                              args: ["{arguments}.0", "{arguments}.1", "{arguments}.2"]
-                            }
-                          }
-                        }
+                        type: "sjrk.chatty.translator"
                     }
                 }
             }
