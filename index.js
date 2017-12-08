@@ -3,6 +3,7 @@ var translate = require("translate");
 
 translate.engine = "yandex";
 translate.key = process.env.TRANSLATE_KEY;
+// https://stackoverflow.com/questions/43024906/pass-node-env-variable-with-windows-powershell
 
 require("kettle");
 var sjrk = fluid.registerNamespace("sjrk")
@@ -25,7 +26,7 @@ fluid.defaults("sjrk.chatty", {
                             requestHandlers: {
                                 webSocketsHandler: {
                                     "type": "sjrk.chatty.handler",
-                                    "route": "/chatRoom/:roomId/:lang"
+                                    "route": "/chatRoom/:userId/:roomId/:lang"
                                 }
                             }
                         }
@@ -60,18 +61,19 @@ fluid.defaults("sjrk.chatty.handler", {
 
 // TODO: how do we clean up clients as they disconnect?
 sjrk.chatty.registerClient = function (request, ws, server) {
+  var userId = request.req.params["userId"];
   var roomId = request.req.params["roomId"];
   var lang = request.req.params["lang"];
-  console.log("New client connected: ", roomId, lang);
+  console.log("New client connected: ", userId, roomId, lang);
 
   server.chatroomTracker.rooms[roomId] = server.chatroomTracker.rooms[roomId] ? server.chatroomTracker.rooms[roomId] : [];
-  server.chatroomTracker.rooms[roomId].push({lang: lang, ws: ws})
-  console.log(server.chatroomTracker.rooms[roomId]);
+  server.chatroomTracker.rooms[roomId].push({userId: userId, lang: lang, ws: ws})
 };
 
 sjrk.chatty.receiveMessage = function (request, message, server) {
     var roomId = request.req.params["roomId"];
     var messageLang = request.req.params["lang"];
+    var userId = request.req.params["userId"];
     var message = JSON.stringify(message, null, 2);
     console.log("Chatroom " + roomId, "Received message " + message, "Lang: " + messageLang);
     var chatroom = server.chatroomTracker.rooms[roomId];
@@ -80,7 +82,14 @@ sjrk.chatty.receiveMessage = function (request, message, server) {
       sjrk.chatty.translateMessage(message, messageLang, chatterLang).then(function (translatedMessage) {
         // TODO: readyStates should be constants somewhere
         if (chatter.ws.readyState === 1) {
-          chatter.ws.send(translatedMessage);
+          var finalMessage = fluid.stringTemplate("%userId sent %messageLang : %message / %chatterLang : %translatedMessage", {
+            userId: userId,
+            messageLang: messageLang,
+            message: message,
+            chatterLang: chatterLang,
+            translatedMessage: translatedMessage
+          });
+          chatter.ws.send(finalMessage);
         }
       });
     });

@@ -4,6 +4,6 @@ Very simple tech demo of a real-time translating chat application, using `kettle
 
 No web UI yet, but can be tested using wscat:
 
-- `wscat -c ws://localhost:8081/chatRoom/1/es`
-- `wscat -c ws://localhost:8081/chatRoom/1/en`
-- `wscat -c ws://localhost:8081/chatRoom/1/fr`
+- `wscat --no-color -c ws://localhost:8081/chatRoom/alano/1/es`
+- `wscat --no-color -c ws://localhost:8081/chatRoom/allen/1/en`
+- `wscat --no-color -c ws://localhost:8081/chatRoom/alain/1/fr`
