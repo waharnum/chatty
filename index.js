@@ -1,4 +1,9 @@
 var fluid = require("infusion");
+var translate = require("translate");
+
+translate.engine = "yandex";
+translate.key = process.env.TRANSLATE_KEY;
+
 require("kettle");
 var sjrk = fluid.registerNamespace("sjrk")
 
@@ -66,17 +71,24 @@ sjrk.chatty.registerClient = function (request, ws, server) {
 
 sjrk.chatty.receiveMessage = function (request, message, server) {
     var roomId = request.req.params["roomId"];
-    var lang = request.req.params["lang"];
+    var messageLang = request.req.params["lang"];
     var message = JSON.stringify(message, null, 2);
-    console.log("Chatroom " + roomId, "Received message " + message, "Lang: " + lang);
+    console.log("Chatroom " + roomId, "Received message " + message, "Lang: " + messageLang);
     var chatroom = server.chatroomTracker.rooms[roomId];
     fluid.each(chatroom, function (chatter) {
-      // TODO: readyStates should be constants somewhere
-      if (chatter.ws.readyState === 1) {
-        chatter.ws.send(message);
-      }
+      var chatterLang = chatter.lang;
+      sjrk.chatty.translateMessage(message, messageLang, chatterLang).then(function (translatedMessage) {
+        // TODO: readyStates should be constants somewhere
+        if (chatter.ws.readyState === 1) {
+          chatter.ws.send(translatedMessage);
+        }
+      });
     });
 };
+
+sjrk.chatty.translateMessage = function (message, fromLang, toLang) {
+  return translate(message, {from: fromLang, to: toLang});
+}
 
 // Construct the server using the above config
 sjrk.chatty();
