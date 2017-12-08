@@ -8,6 +8,13 @@ translate.key = process.env.TRANSLATE_KEY;
 require("kettle");
 var sjrk = fluid.registerNamespace("sjrk")
 
+fluid.defaults("sjrk.chatty.chatroomTracker", {
+  gradeNames: "fluid.component",
+  members: {
+    rooms: {}
+  }
+});
+
 fluid.defaults("sjrk.chatty", {
     gradeNames: "fluid.component",
     components: {
@@ -32,12 +39,7 @@ fluid.defaults("sjrk.chatty", {
                         }
                     },
                     chatroomTracker: {
-                        type: "fluid.component",
-                        options: {
-                          members: {
-                            rooms: {}
-                          }
-                        }
+                        type: "sjrk.chatty.chatroomTracker"
                     }
                 }
             }
@@ -82,6 +84,7 @@ sjrk.chatty.receiveMessage = function (request, message, server) {
       sjrk.chatty.translateMessage(message, messageLang, chatterLang).then(function (translatedMessage) {
         // TODO: readyStates should be constants somewhere
         if (chatter.ws.readyState === 1) {
+          var isOwnMessage = chatter.userId === userId;
           var finalMessage = fluid.stringTemplate("%userId sent %messageLang : %message / %chatterLang : %translatedMessage", {
             userId: userId,
             messageLang: messageLang,
