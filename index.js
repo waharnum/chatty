@@ -40,6 +40,17 @@ fluid.defaults("sjrk.chatty", {
                     },
                     chatroomTracker: {
                         type: "sjrk.chatty.chatroomTracker"
+                    },
+                    translator: {
+                        type: "fluid.component",
+                        options: {
+                          invokers: {
+                            translate: {
+                              funcName: "sjrk.chatty.translateMessage",
+                              args: ["{arguments}.0", "{arguments}.1", "{arguments}.2"]
+                            }
+                          }
+                        }
                     }
                 }
             }
@@ -81,7 +92,7 @@ sjrk.chatty.receiveMessage = function (request, message, server) {
     var chatroom = server.chatroomTracker.rooms[roomId];
     fluid.each(chatroom, function (chatter) {
       var chatterLang = chatter.lang;
-      sjrk.chatty.translateMessage(message, messageLang, chatterLang).then(function (translatedMessage) {
+      server.translator.translate(message, messageLang, chatterLang).then(function (translatedMessage) {
         // TODO: readyStates should be constants somewhere
         if (chatter.ws.readyState === 1) {
           var isOwnMessage = chatter.userId === userId;
